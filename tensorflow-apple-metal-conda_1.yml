@@ -1,0 +1,20 @@
+name: tensorflow1
+channels:
+  - apple
+  - conda-forge
+dependencies:
+    - python
+    - pip
+    - tensorflow-deps
+    - scikit-learn
+    - numpy
+    - scipy
+    - pandas
+    - pandas-datareader
+    - pip:
+        - tensorflow-macos
+        - tensorflow-metal
+        - bayesian-optimization
+        - gym
+        - kaggle
+        
