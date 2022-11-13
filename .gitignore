@@ -1,3 +1,6 @@
 /fashion-mnist
 pyvenv.cfg
+bin
+lib
+.idea
 
