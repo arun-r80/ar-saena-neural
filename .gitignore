@@ -1,0 +1,7 @@
+/fashion-mnist
+pyvenv.cfg
+bin
+lib
+.idea
+.DS_Store
+
