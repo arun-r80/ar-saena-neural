@@ -1,7 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
 import numpy as np
-print('In Program')
+import sys
+print('In Program', sys.path)
 
 
 # GRADED FUNCTION: house_model
