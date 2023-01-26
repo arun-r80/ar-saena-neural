@@ -119,7 +119,7 @@ if data_set_to_load == "2" or data_set_to_load == "0":
 
     print("Compressing train label")
 
-    with open(os.path.join(os.path.dirname(os.getcwd()),"data","train_label_pkl_gz.gz"), mode="wb" ) as pkl_gz:
+    with gzip.open(os.path.join(os.path.dirname(os.getcwd()),"data","train_label_pkl_gz.gz"), mode="wb" ) as pkl_gz:
         with open(os.path.join(os.path.dirname(os.getcwd()), "data", "train_label_pkl.pkl"), mode="rb") as pkl:
             shutil.copyfileobj(pkl, pkl_gz)
 
