@@ -31,6 +31,7 @@ import shutil
 import sys, configparser
 
 
+
 def __bytes2int__(b):
     """
     :param b: bytes object returned as result of read() function on a file object. The file object
