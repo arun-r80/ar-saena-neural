@@ -118,7 +118,7 @@ def load_mnist(projectrootfolder):
 
         print("Completed reading training label file")
         for i in range(10):
-            print("Image Label for element  ",i, "is", train_label_set[i])
+            print("Image Label for element  ", i, "is", train_label_set[i])
 
         print("Starting pickling for training labels")
         train_labels_pkl_file = open(os.path.join(projectrootfolder, "data", "train_label_pkl.pkl"), mode="wb" )
@@ -128,7 +128,7 @@ def load_mnist(projectrootfolder):
 
         print("Compressing train label")
 
-        with gzip.open(os.path.join(projectrootfolder,"data","train_label_pkl_gz.gz"), mode="wb" ) as pkl_gz:
+        with gzip.open(os.path.join(projectrootfolder,"data","train_label_pkl_gz.gz"), mode="w" ) as pkl_gz:
             with open(os.path.join(os.getcwd(), "data", "train_label_pkl.pkl"), mode="rb") as pkl:
                 shutil.copyfileobj(pkl, pkl_gz)
 
