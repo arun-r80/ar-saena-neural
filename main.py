@@ -28,14 +28,15 @@ def print_hi(name):
 if __name__ == '__main__':
     print_hi('PyCharm')
 
-projectrootfolder = os.getcwd()
+
+training_data_file = os.path.join(os.getcwd(), "data",training_data_redimensioned_file)
 # The following lines of code create training data file which ultimately serves as input
 # for neural network. These can be uncommented if need be, but currently the gzip file with training data
 # is available to be fed into neural network.
 #load_mnist.load_mnist(projectrootfolder)
 #extract_mnist.redim_training_dataset(projectrootfolder)
 # initialize neuron structure for neural schema.
-handwritten_digits = neural.Neural( training_data_redimensioned_file, [784, 9, 10], 60000)
+handwritten_digits = neural.Neural( training_data_file, [784, 9, 10], 60000)
 handwritten_digits.train(10)
 
 
