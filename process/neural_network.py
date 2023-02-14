@@ -48,7 +48,7 @@ class Neural:
         # The training data set is a single dimensional array which contains color RGB for
         # each of 60000 image, with each image being represented as an array of 784 pixels,
         # and these 784 pixels, in turn, refer to 28x28 pixels.
-        self.X = np.reshape(training_x, [self.m, 784]).T  # X => (784, 60000)
+        self.X = np.reshape(training_x, [self.m, 784]).T / 1000 # X => (784, 60000)
 
         self.Y = training_y   # Y => (60000,1)
         print(np.shape(self.Y))
@@ -68,12 +68,12 @@ class Neural:
         print("Shape of moment of loss on a output ", np.shape(a))
         return OutPut - Y
 
-
-    def _moment_Of_Activation_Function_On_Output__(self, layer=None):
-        k = np.multiply(self.A[layer-1], (1 - self.A[layer-1]))
+    def _moment_of_activation_function_on_weighted_output__(self, layer=None):
+        if layer == 0:
+            return self.A[layer]
+        k = np.multiply(self.A[layer], (1 - self.A[layer]))
         print("Shape of first moment ", np.shape(k))
-        return np.multiply(self.A[layer-1], (1 - self.A[layer-1]))
-
+        return np.multiply(self.A[layer], (1 - self.A[layer]))
 
     def _prepare_epoch__(self):
         self.Z = []
@@ -93,6 +93,7 @@ class Neural:
         """
         t_start = time.time()
         for i in range(len(self.W)):
+            print("Layer ", i )
             t_zStart = time.time()
             z_next = np.dot(self.W[i], self.A[i]) + self.B[i]
             t_zEnd = time.time()
@@ -106,8 +107,10 @@ class Neural:
             print("Time taken for A calcuation in layer ", i+1 , ":", t_a_end - t_a_start)
             print("Shape of A ", np.shape(a_next))
             self.A.append(a_next)
+            self.Z.append(z_next)
         self.A_OUTPUT_LAYER = np.sum(self.A[-1], axis=0)
         t_end = time.time()
+        print("Size of A", len(self.A))
         print("Time taken for forward propagation ", t_end - t_start)
         print("Shape of A_OutPut Layer ", np.shape(self.A_OUTPUT_LAYER))
 
@@ -119,18 +122,19 @@ class Neural:
         """
         self.L = 0.5 * np.square(self.A_OUTPUT_LAYER - self.Y)
         self.J = np.sum(self.L, axis=0) / self.m
+        self.LossMomentOnOutput = self._moment_lossOnOutput__(self.A_OUTPUT_LAYER, self.Y).reshape(1,self.m)
 
-    def _prep_backward_propagation(self):
+    def _prep_backward_propagation__(self):
         """
         This function prepares backward propagation,
         by resetting necessary variables.
         :return:
         """
-        self.LossMomentOnOutput = self._moment_lossOnOutput__(self.A_OUTPUT_LAYER, self.Y)
+
         # The above is loss differential for last layer, for the loss
         # function which is a standard deviation. This needs to be replaced with
         # a first differential of Loss function on output function.
-        self.LossDifferential = [np.ones(x) for x in self.size[1:]]
+        self.LossDifferential = [np.ones([x, self.m]) for x in self.size[1:]]
         print("Shape of Loss Diff 1 ", np.shape(self.LossDifferential[0]), np.shape(self.LossDifferential[1]))
 
         # The loss differential is an important entity with special properties,
@@ -143,8 +147,6 @@ class Neural:
         self.dW = list(range(len(self.size) -1 ))  # Store the gradient of Weights against Loss function for each layer
         self.db = list(range(len(self.size) - 1 ))  # Store gradient of bias against Loss function for each layer.
 
-
-
     def _backward_propagate__(self):
         """
         This function completes the backward propagation across all layers.
@@ -153,20 +155,46 @@ class Neural:
         self._calculate_loss__()
         # calculate dW and db for output layer,
         # as it is a special case
-        db_spread_over_training_data = self._moment_Of_Activation_Function_On_Output__(len(self.size)) * self._moment_lossOnOutput__(self.A_OUTPUT_LAYER, self.Y)
+        db_spread_over_training_data = self._moment_of_activation_function_on_weighted_output__(len(self.size) - 1) * self._moment_lossOnOutput__(self.A_OUTPUT_LAYER, self.Y)
         db = np.sum(db_spread_over_training_data, axis=1) / self.m
         db_test_npsum = np.sum(db_spread_over_training_data, axis=1)
 
         print("dB = ", db[0], db_test_npsum[0] / 60000)
-        print("Shape of db = product of two moments ", np.shape(db) )
+        print("Shape of db = product of two moments ", np.shape(db))
         print("Shape of B in outermost layer ", np.shape(self.B[-1]))
         print("Shape of A pervious player ", np.shape(self.A[-2]))
         dW = np.dot(db_spread_over_training_data, self.A[-2].T) / self.m
         print("Shape of dW in the outermost layer ", np.shape(dW))
+        self.dW[-1] = dW
+        self.db[-1] = db
+        for layer in range(len(self.W) -1, 0, -1):
+            w_layer_index = layer - 1 # calibrate the iteration counter to remove input layer in weights and biases
+            print(w_layer_index)
+            mu_layer = np.dot( np.multiply(self.LossDifferential[w_layer_index + 1], self._moment_of_activation_function_on_weighted_output__(w_layer_index + 2)).T, self.W[w_layer_index+1]).T
+            self.LossDifferential[w_layer_index] = mu_layer
+            print(np.shape(self.LossDifferential[w_layer_index]))
+            k = self.LossMomentOnOutput * mu_layer
+            print("Shape of k", np.shape(k), mu_layer[0][0], self.LossMomentOnOutput[0], k[0][0])
+            print("Shape of k", np.shape(k), mu_layer[1][0], self.LossMomentOnOutput[0], k[1][0])
+            moment_of_layer = self._moment_of_activation_function_on_weighted_output__(w_layer_index + 1)
+            print("Analysing output of moment of layer")
+            print("Shape of activation output from previous layer ", np.shape(self.A[w_layer_index + 1]))
+            for j in range(9):
+                print("A[",j,"]", self.A[w_layer_index + 1][j][0])
+                print("Z[", j,"]", self.Z[w_layer_index][j][0])
 
-
-
-
+            print("Shape of moment of layer ", np.shape(moment_of_layer))
+            for j in range(9):
+                print(moment_of_layer[j][0], k[j][0])
+            db_spread_over_training_data = k * moment_of_layer
+            print("Shape of db", np.shape(db_spread_over_training_data))
+            print(db_spread_over_training_data.T[0])
+            print("Shape of k1 ", np.shape(db_spread_over_training_data))
+            print("Shape of A from previous layer ", np.shape(self.A[w_layer_index].T))
+            dW = np.dot(db_spread_over_training_data, self.A[w_layer_index].T)
+            print("Shape of dW", np.shape(dW))
+            print(dW[5])
+            print(self.W[w_layer_index][5])
 
     def train(self, epochs=10):
         """ This is the externally exposed class, which is just a wrapper
@@ -178,7 +206,7 @@ class Neural:
 
         self._prepare_epoch__()
         self._propagate_forward__()
-        self._prep_backward_propagation()
+        self._prep_backward_propagation__()
         self._backward_propagate__()
 
 
