@@ -53,7 +53,7 @@ def load_mnist(projectrootfolder):
     config.read_file(config_file)
     print(config.get("Load data","dataset_to_load" ))
     data_set_to_load = config.get("Load data","dataset_to_load")
-    if data_set_to_load == "1"  or data_set_to_load == "0":
+    if data_set_to_load == "1" or data_set_to_load == "0":
 
         #
         # The gzip files being opened here may not be part of "data" subfolder in future commits.

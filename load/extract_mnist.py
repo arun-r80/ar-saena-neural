@@ -1,4 +1,3 @@
-import shutil
 
 import numpy as np
 import os, pathlib, gzip, pickle, sys
@@ -10,7 +9,7 @@ def redim_training_dataset(projectrootfolder):
     training_image_gzip_extract = gzip.open(os.path.join(projectrootfolder, "data", "train_image_pkl_gz.gz"), mode="rb")
     training_image_pickle = pickle.load(training_image_gzip_extract)
     training_image_np = np.array(training_image_pickle)
-    training_image = [ np.reshape(x, (28,28)) for x in np.reshape(training_image_np, (60000, 784))]
+    training_image =  np.reshape(training_image_np, (60000, 784))
     print("Unpickling complete!!!")
     print("Shape of Unpickled training image object", np.shape(training_image_np))
 
