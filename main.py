@@ -11,8 +11,8 @@ training_data_file = os.path.join(os.getcwd())#, "data",training_data_redimensio
 # for neural network. These can be uncommented if need be, but currently the gzip file with training data
 # is available to be fed into neural network.
 # initialize neuron structure for neural schema.
-handwritten_digits = neural.Neural(training_data_file, [784, 9, 10], 60000)
-handwritten_digits.train(100)
+handwritten_digits = neural.Neural(training_data_file, [784,10, 9], 60000)
+handwritten_digits.train(300)
 
 
 

@@ -5,7 +5,7 @@ train - ie., to forward and backpropagate on training data.
 
 import numpy as np
 import os, \
-    matplotlib, \
+    matplotlib.pyplot, \
     gzip \
 
 
@@ -22,7 +22,7 @@ class Neural:
 
     """
 
-    def __init__(self, training_data, no_of_neyral_layers, no_of_training_set_members=60000):
+    def __init__(self, training_data, no_of_neyral_layers, no_of_training_set_members=60000, eta=0.0001):
         """
         Initialize class with size as input.
         :param size: a list which contains no of neurons for each layer.So, len(size) will provide total
@@ -31,6 +31,9 @@ class Neural:
         """
         self.size = no_of_neyral_layers
         self.m = no_of_training_set_members
+        self.cost_function = []
+        self.success_rate = []
+        self.eta = eta
         # random assignment of weights for each layer
         self.W = [np.random.randn(*z) for z in list(zip([x for x in self.size[1:]], [y for y in self.size[:-1]]))]
         # random assignment of bias for each layer
@@ -67,7 +70,7 @@ class Neural:
         training_label_set = np.array(training_label[8:])
         return (training_image_set.T, training_label_set)
 
-    def _moment_lossOnOutput__(self, OutPut, Y):
+    def _moment_lossOnOutput__(self, output, y):
         """
         This function returns the first moment of loss function(L) on classifier output(a)
         when the Loss function is chosen as the standard deviation, ie:
@@ -77,7 +80,7 @@ class Neural:
         :return: The first derivative of loss function on the output value
         """
 
-        return OutPut - Y
+        return output - y
 
     def _moment_of_activation_function_on_weighted_output__(self, layer=None):
         if layer == 0:
@@ -119,8 +122,9 @@ class Neural:
         :return:
         """
         self.L = 0.5 * np.square(self.A_OUTPUT_LAYER - self.Y)
-        self.J = np.sum(self.L, axis=0) / self.m
+        self.J = np.sum(self.L) / self.m
         self.LossMomentOnOutput = self._moment_lossOnOutput__(self.A_OUTPUT_LAYER, self.Y)
+
 
     def _prep_backward_propagation__(self):
         """
@@ -149,6 +153,11 @@ class Neural:
         :return:
         """
         self._calculate_loss__()
+        # db_over_training_data = self.LossMomentOnOutput * self._moment_of_activation_function_on_weighted_output__(len(self.size) - 1)
+        # db = np.sum(db_over_training_data, axis=0, keepdims=True)
+        # dw = np.dot(db_over_training_data, self.A[-2].T)
+        # self.W[-1] = 0.0001 * dw
+        # self.B[-1] = 0.0001 * db
         for layer in range(len(self.W), 0, -1):
             w_layer_index = layer - 1  # calibrate the iteration counter to remove input layer in weights and biases
             if layer == len(self.W):
@@ -164,8 +173,37 @@ class Neural:
             db_spread_over_training_data = k * moment_of_layer
             dW = np.dot(db_spread_over_training_data, self.A[w_layer_index].T)
             db = np.sum(db_spread_over_training_data, axis=1, keepdims=True) / self.m
-            self.W[w_layer_index] -= 0.00001 * dW # a hardcoded learning rate of 1/1,00,000
-            self.B[w_layer_index] -= 0.00001 * db
+            self.W[w_layer_index] -= self.eta * dW  # a hardcoded learning rate of 1/1,00,000
+            self.B[w_layer_index] -= self.eta * db
+
+    def _backward_propagate_2__(self):
+        """
+        This function completes the backward propagation across all layers.
+        :return:
+        """
+        self._calculate_loss__()
+        db_over_training_data = self.LossMomentOnOutput * self._moment_of_activation_function_on_weighted_output__(len(self.size) - 1)
+        db = np.sum(db_over_training_data, axis=1, keepdims=True)
+        dw = np.dot(db_over_training_data, self.A[-2].T)
+        self.W[-1] -= self.eta * dw
+        self.B[-1] -= self.eta * db
+        for layer in range(len(self.W) - 1, 0, -1):
+            db_over_training_data = np.dot(db_over_training_data.T, self.W[layer]).T * self._moment_of_activation_function_on_weighted_output__(layer)
+            db = np.sum(db_over_training_data, axis=1, keepdims=True)
+            dw = np.dot(db_over_training_data, self.A[layer - 1].T)
+            self.W[layer - 1] -= self.eta * dw # a hardcoded learning rate of 1/1,00,000
+            self.B[layer - 1] -= self.eta * db
+
+    def _evaluate(self):
+        """
+        Evaluate percentage of succussful prediction in every epoch
+        :return: return the percentage of successful prediction
+        """
+        a = np.isclose(self.A_OUTPUT_LAYER, self.Y, atol=0.01, rtol=0.01)
+        print("Shape of a", np.shape(a), end=" ")
+        b = np.count_nonzero(np.isclose(self.A_OUTPUT_LAYER, self.Y, 0.001, atol=0.01))
+        print("No of non zero = ", b, end=" ")
+        return b/self.m
 
     def train(self, epochs=10):
         """ This is the externally exposed class, which is just a wrapper
@@ -175,9 +213,26 @@ class Neural:
         self.epochs = epochs
         # initialize weighted output(Z) and activation function output for this epoch
         for i in range(self.epochs):
-            print("Epoch ", i)
+            print("Epoch ", i, end=" ")
             self._prepare_epoch__()
             self._propagate_forward__()
             self._prep_backward_propagation__()
-            self._backward_propagate__()
-            print("J", self.J)
+            self._backward_propagate_2__()
+            # self._backward_propagate__()
+            print("J", self.J, end= " " )
+            rate = self._evaluate()
+            print("Success results =", rate)
+            self.cost_function.append(self.J)
+            self.success_rate.append(rate)
+
+        print(self.success_rate)
+        fig, (ax1,ax2) = matplotlib.pyplot.subplots(2,1)
+        ax1.plot(range(self.epochs), self.cost_function)
+        ax2.plot(range(self.epochs), self.success_rate)
+        matplotlib.pyplot.show()
+        print("m ", self.m)
+        print("Shape of A", np.shape(self.A[-1]))
+        print("Shape of Y", np.shape(self.Y))
+        print("A values", self.A[-1].T[0])
+        print("A out put ", self.A_OUTPUT_LAYER[:10])
+        print("Y", self.Y.T[:10])
