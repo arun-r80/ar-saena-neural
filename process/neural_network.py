@@ -70,7 +70,7 @@ class Neural:
         training_label_set = np.array(training_label[8:])
         return (training_image_set.T, training_label_set)
 
-    def _moment_lossOnOutput__(self, output, y):
+    def _moment_lossonoutput__(self, output, y):
         """
         This function returns the first moment of loss function(L) on classifier output(a)
         when the Loss function is chosen as the standard deviation, ie:
@@ -79,7 +79,6 @@ class Neural:
         :param Y: Test data labels corresponding to the input data
         :return: The first derivative of loss function on the output value
         """
-
         return output - y
 
     def _moment_of_activation_function_on_weighted_output__(self, layer=None):
@@ -123,7 +122,7 @@ class Neural:
         """
         self.L = 0.5 * np.square(self.A_OUTPUT_LAYER - self.Y)
         self.J = np.sum(self.L) / self.m
-        self.LossMomentOnOutput = self._moment_lossOnOutput__(self.A_OUTPUT_LAYER, self.Y)
+        self.LossMomentOnOutput = self._moment_lossonoutput__(self.A_OUTPUT_LAYER, self.Y)
 
 
     def _prep_backward_propagation__(self):
@@ -185,8 +184,8 @@ class Neural:
         db_over_training_data = self.LossMomentOnOutput * self._moment_of_activation_function_on_weighted_output__(len(self.size) - 1)
         db = np.sum(db_over_training_data, axis=1, keepdims=True)
         dw = np.dot(db_over_training_data, self.A[-2].T)
-        self.W[-1] -= self.eta * dw
-        self.B[-1] -= self.eta * db
+        self.W[-1] -= self.eta * dw / 60000
+        self.B[-1] -= self.eta * db / 60000
         for layer in range(len(self.W) - 1, 0, -1):
             db_over_training_data = np.dot(db_over_training_data.T, self.W[layer]).T * self._moment_of_activation_function_on_weighted_output__(layer)
             db = np.sum(db_over_training_data, axis=1, keepdims=True)
