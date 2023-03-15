@@ -22,7 +22,7 @@ class Neural:
 
     """
 
-    def __init__(self, training_data, no_of_neyral_layers, no_of_training_set_members=60000, eta=0.0001):
+    def __init__(self, training_data, no_of_neyral_layers, no_of_training_set_members=60000, eta=0.25):
         """
         Initialize class with size as input.
         :param size: a list which contains no of neurons for each layer.So, len(size) will provide total
@@ -84,8 +84,6 @@ class Neural:
     def _moment_of_activation_function_on_weighted_output__(self, layer=None):
         if layer == 0:
             return self.A[layer]
-        k = np.multiply(self.A[layer], (1 - self.A[layer]))
-
         return np.multiply(self.A[layer], (1 - self.A[layer]))
 
     def _prepare_epoch__(self):
@@ -172,7 +170,7 @@ class Neural:
             db_spread_over_training_data = k * moment_of_layer
             dW = np.dot(db_spread_over_training_data, self.A[w_layer_index].T)
             db = np.sum(db_spread_over_training_data, axis=1, keepdims=True) / self.m
-            self.W[w_layer_index] -= self.eta * dW  # a hardcoded learning rate of 1/1,00,000
+            self.W[w_layer_index] -= self.eta * dW/self.m  # a hardcoded learning rate of 1/1,00,000
             self.B[w_layer_index] -= self.eta * db
 
     def _backward_propagate_2__(self):
@@ -184,23 +182,22 @@ class Neural:
         db_over_training_data = self.LossMomentOnOutput * self._moment_of_activation_function_on_weighted_output__(len(self.size) - 1)
         db = np.sum(db_over_training_data, axis=1, keepdims=True)
         dw = np.dot(db_over_training_data, self.A[-2].T)
-        self.W[-1] -= self.eta * dw / 60000
-        self.B[-1] -= self.eta * db / 60000
+        self.W[-1] -= self.eta * dw / self.m
+        self.B[-1] -= self.eta * db / self.m
         for layer in range(len(self.W) - 1, 0, -1):
             db_over_training_data = np.dot(db_over_training_data.T, self.W[layer]).T * self._moment_of_activation_function_on_weighted_output__(layer)
             db = np.sum(db_over_training_data, axis=1, keepdims=True)
             dw = np.dot(db_over_training_data, self.A[layer - 1].T)
-            self.W[layer - 1] -= self.eta * dw # a hardcoded learning rate of 1/1,00,000
-            self.B[layer - 1] -= self.eta * db
+            self.W[layer - 1] -= self.eta * dw / self.m # a hardcoded learning rate of 1/1,00,000
+            self.B[layer - 1] -= self.eta * db / self.m
 
     def _evaluate(self):
         """
         Evaluate percentage of succussful prediction in every epoch
         :return: return the percentage of successful prediction
         """
-        a = np.isclose(self.A_OUTPUT_LAYER, self.Y, atol=0.01, rtol=0.01)
-        print("Shape of a", np.shape(a), end=" ")
-        b = np.count_nonzero(np.isclose(self.A_OUTPUT_LAYER, self.Y, 0.001, atol=0.01))
+        a = np.isclose(self.A_OUTPUT_LAYER, self.Y, atol=0.2, rtol=0.01)
+        b = np.count_nonzero(a)
         print("No of non zero = ", b, end=" ")
         return b/self.m
 
@@ -210,17 +207,17 @@ class Neural:
             epochs: No of epochs to train the data
         """
         self.epochs = epochs
-        # initialize weighted output(Z) and activation function output for this epoch
         for i in range(self.epochs):
             print("Epoch ", i, end=" ")
+            # initialize weighted output(Z) and activation function output for this epoch
             self._prepare_epoch__()
             self._propagate_forward__()
             self._prep_backward_propagation__()
             self._backward_propagate_2__()
             # self._backward_propagate__()
-            print("J", self.J, end= " " )
-            rate = self._evaluate()
-            print("Success results =", rate)
+            print("J", round(self.J, 4), end= " " )
+            rate = self._evaluate() * 100
+            print("Success results =", round( rate, 2), "%" )
             self.cost_function.append(self.J)
             self.success_rate.append(rate)
 
@@ -229,9 +226,4 @@ class Neural:
         ax1.plot(range(self.epochs), self.cost_function)
         ax2.plot(range(self.epochs), self.success_rate)
         matplotlib.pyplot.show()
-        print("m ", self.m)
-        print("Shape of A", np.shape(self.A[-1]))
-        print("Shape of Y", np.shape(self.Y))
-        print("A values", self.A[-1].T[0])
-        print("A out put ", self.A_OUTPUT_LAYER[:10])
-        print("Y", self.Y.T[:10])
+        ### End of the show, baby!!!
