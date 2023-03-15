@@ -16,7 +16,7 @@ training_data_file = os.path.join(os.getcwd())#, "data",training_data_redimensio
 # handwritten_digits.train(500)
 
 handwritten_digits = neural2.Neural_2(training_data_file, [784,100, 9], 60000)
-handwritten_digits.train(500)
+handwritten_digits.train(5)
 
 
 
