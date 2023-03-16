@@ -1,0 +1,9 @@
+name: neural-environment
+dependencies:
+  - python
+  - numpy
+  - os
+  - gzip
+  - matplotlib
+  - pathlib
+  - pickle
