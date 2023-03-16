@@ -1,0 +1,5 @@
+name: neural-environment
+dependencies:
+  - python
+  - numpy
+  - matplotlib
