@@ -167,6 +167,14 @@ class Neural:
             self.W[w_layer_index] -= 0.00001 * dW # a hardcoded learning rate of 1/1,00,000
             self.B[w_layer_index] -= 0.00001 * db
 
+
+    def _evaluate(self):
+        """
+        Evaluate percentage effectiveness of the model
+        :return:
+        """
+        result = self.A_OUTPUT_LAYER - self.Y
+
     def train(self, epochs=10):
         """ This is the externally exposed class, which is just a wrapper
             on forward and backward propagation functions.
@@ -175,9 +183,9 @@ class Neural:
         self.epochs = epochs
         # initialize weighted output(Z) and activation function output for this epoch
         for i in range(self.epochs):
-            print("Epoch ", i)
+            print("Epoch ", i, end=" ")
             self._prepare_epoch__()
             self._propagate_forward__()
             self._prep_backward_propagation__()
             self._backward_propagate__()
-            print("J", self.J)
+            print("J", self.J, end=" ")
