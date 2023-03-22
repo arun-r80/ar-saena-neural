@@ -150,13 +150,14 @@ class Neural_2(neural_network.Neural):
                 epochs: No of epochs to train the data
             """
         self.epochs = epochs
-        l = len(self.X)
+        X_Transpose = self.X.T
+        Y_Transpose = self.Y.T
         # initialize weighted output(Z) and activation function output for this epoch
         for i in range(self.epochs):
             print("Epoch ", i, end=" ")
-            batch_index = np.random.randint(0, self.m - self.batch_size, 1, dtype=int)
-            x = self.X[batch_index: batch_index + self.batch_size]
-            y = self.Y[batch_index: batch_index + self.batch_size]
+            batch_index = np.random.randint(0, self.m - self.batch_size, 1, dtype=int)[0]
+            x = X_Transpose[batch_index: batch_index + self.batch_size].T
+            y = Y_Transpose[batch_index: batch_index + self.batch_size].T
             self._prepare_epoch__(x)
             self._propagate_forward__()
             self._prep_backward_propagation__()
