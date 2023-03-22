@@ -129,7 +129,6 @@ class Neural:
         by resetting necessary variables.
         :return:
         """
-
         # The above is loss differential for last layer, for the loss
         # function which is a standard deviation. This needs to be replaced with
         # a first differential of Loss function on output function.
