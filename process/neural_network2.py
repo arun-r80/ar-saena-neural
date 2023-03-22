@@ -1,5 +1,5 @@
 """
-Neural Network fine tuned with cross entropy, mini batches and yet all
+Neural Network fine-tuned with cross entropy, mini batches and yet all
 """
 
 import numpy as np, gzip, os, pathlib
@@ -19,18 +19,23 @@ def vectorize_y(y):
 
 
 class Neural_2(neural_network.Neural):
-    def __init__(self, training_data, no_of_neural_layers, no_of_training_set_members=60000, eta=0.25):
+    def __init__(self, training_data, no_of_neural_layers,  no_of_training_set_members=50000,
+                 no_of_validation_data_members=10000, eta=0.25, l_regularize=0.15, m=10):
         """
         Initialize class with size as input.
-        :param size: a list which contains no of neurons for each layer.So, len(size) will provide total
+        :param no_of_neural_layers: a list which contains no of neurons for each layer.So, len(size) will provide total
         no of layers in this neural schema, including input(which contains features or "X" values)
         and output layers.
         """
-        self.size = no_of_neural_layers
+        super().__init__(training_data, no_of_neural_layers, no_of_training_set_members, eta=eta)
+
         self.m = no_of_training_set_members
+        self.v = no_of_validation_data_members
         self.cost_function = []
         self.success_rate = []
         self.eta = eta
+        self.lmbda = l_regularize
+        self.batch_size = m
         print("In derived class init")
         # random assignment of weights for each layer
         self.W = [np.random.randn(*z) for z in list(zip([x for x in self.size[1:]], [y for y in self.size[:-1]]))]
@@ -45,16 +50,12 @@ class Neural_2(neural_network.Neural):
         # each of 60000 image, with each image being represented as an array of 784 pixels,
         # and these 784 pixels, in turn, refer to 28x28 pixels.
         training_data_transposed = training_x.T
-        self.X = training_data_transposed[:50000].T  # X => (784, 60000)
-        print("shape of X", np.shape(self.X))
-        self.Validation_Data = training_data_transposed[50000:].T
-        print("Shape of validation data", np.shape(self.Validation_Data))
+        self.X = training_data_transposed[:no_of_training_set_members].T  # X => (784, 60000)
+        self.Validation_Data = training_data_transposed[no_of_training_set_members:].T
         # Modify training results - y - to be a vector
-        self.Y = vectorize_y(training_y[:50000])
-        self.RAW_Y = training_y[:50000]
-        print("Shape of Y", np.shape(self.Y))
-
-        self.Validation_Y = vectorize_y(training_y[50000:])
+        self.Y = vectorize_y(training_y[:no_of_training_set_members])
+        self.RAW_Y = training_y[:no_of_training_set_members]
+        self.Validation_Y = vectorize_y(training_y[no_of_training_set_members:])
         self.epochs = 10  # initialize epochs for the training model
         # Load training data
         test_data_file = gzip.open(os.path.join(training_data, "data", "t10k-images-idx3-ubyte.gz"), mode="rb")
@@ -77,7 +78,7 @@ class Neural_2(neural_network.Neural):
         self.Z = []
         self.A = []
         self.A.append(x)
-        self.L = 0  # initialize Loss function to be zero, for the entiretity of dataset.
+        self.L = 0  # initialize Loss function to be zero, for the entirety of dataset.
         self.J = 0  # so initialize the cost function as well.
 
     def _process_feedforward(self, x):
@@ -92,32 +93,44 @@ class Neural_2(neural_network.Neural):
             a = 1 / (1 + np.exp(-z))
         return a
 
-    def _calculate_loss__(self, y, batchsize=50000):
+    def _loss_fn_(self, a, y):
+        """
+        Calculate the loss function as a vector, for given activated outputs from the neural network,
+        and corresponding sample size results y.
+        This function uses Cross Entropy function as the basis to calculate loss.
+        :param a: activated outputs from neural network( activation functions from last layer)
+        :param y: expected results for the sample size
+        :return: cross entropy based loss function as a vector
+        """
+        return -1 * (y * np.log(a) + (1 - y) * np.log(1 - a))
+
+    def _calculate_loss__(self,a, y, lmbda, batchsize=50000):
         """
         Calculate cost and loss function for the epoch, for the selected training subset
         :param y: output values for training
         :return:
         """
-        self.L = -1 * (y * np.log(self.A[-1]) + (1 - y) * np.log(1 - self.A[-1]))
-        self.J = np.sum(self.L) / batchsize
+        self.L_across_outputneurons = self._loss_fn_(a, y)
+        self.L_across_samplesize = np.sum(self.L_across_outputneurons, axis=1,keepdims=True) + (lmbda * 0.5) * sum(np.linalg.norm(w)**2 for w in self.W)
+        self.J = np.sum(self.L_across_samplesize) / batchsize
 
-    def _backward_propagate__(self, x, y):
+    def _backward_propagate__(self, a, y):
         """
         Update weights and biases for the epoch, using backward propagation.
         :return:
         """
-        self._calculate_loss__(y)
+        self._calculate_loss__(a, y, self.lmbda, batchsize=self.batch_size)
         delta = self._moment_lossonoutput__(self.A[-1], y)
-        db = np.sum(delta, axis=1, keepdims=True) / 50000
-        dw = np.dot(delta, self.A[-2].T) / 50000
-        self.W[-1] -= self.eta * dw
-        self.B[-1] -= self.eta * db
+        db = np.sum(delta, axis=1, keepdims=True)
+        dw = np.dot(delta, self.A[-2].T)
+        self.W[-1] = self.W[-1]*(1 - self.eta * (self.lmbda/self.m)) - (self.eta/self.batch_size) * dw
+        self.B[-1] -= (self.eta/self.batch_size) * db
         for layer in range(len(self.W) - 1, 0, -1):
-            delta = np.dot(delta.T, self.W[layer]).T
-            db_population = delta * self._moment_of_activation_function_on_weighted_output__(layer)
-            dw = np.dot(db_population, self.A[layer - 1].T) / 50000
-            self.W[layer - 1] -= self.eta * dw
-            self.B[layer - 1] -= self.eta * np.sum(db_population, axis=1, keepdims=True) / 50000
+            delta = np.dot(delta.T, self.W[layer]).T * self._moment_of_activation_function_on_weighted_output__(layer)
+            db_population = delta
+            dw = np.dot(db_population, self.A[layer - 1].T)
+            self.W[layer - 1] = self.W[layer - 1] * (1 - self.eta * (self.lmbda/self.m)) - (self.eta/self.batch_size) * dw
+            self.B[layer - 1] -= (self.eta/self.batch_size) * np.sum(db_population, axis=1, keepdims=True)
 
     def _evaluate(self, a, y):
         """
@@ -126,11 +139,7 @@ class Neural_2(neural_network.Neural):
         :param y: categorised results for the given dataset
         :return: percentage of successful results
         """
-        # result = np.isclose(a.T, y.T, atol=0.1, rtol=0.01)
-        # print("Shape of resuelt, ", np.shape(result), end = " ")
-        # compress_result = np.sum(result.T, axis=0, keepdims=True)
-        # eval = np.where(compress_result == 1, np.ones((1, len(a.T))), np.zeros((1, len(a.T))))
-        # evaluation = np.count_nonzero(eval)
+
         a = np.array([np.isclose(np.argmax(x), np.argmax(y), atol=0.2, rtol=0.01) for x, y in zip(a.T, y.T)])
         r = np.count_nonzero(a)
         return r / len(a.T) * 100
@@ -141,14 +150,18 @@ class Neural_2(neural_network.Neural):
                 epochs: No of epochs to train the data
             """
         self.epochs = epochs
+        l = len(self.X)
         # initialize weighted output(Z) and activation function output for this epoch
         for i in range(self.epochs):
             print("Epoch ", i, end=" ")
-            self._prepare_epoch__(self.X)
+            batch_index = np.random.randint(0, self.m - self.batch_size, 1, dtype=int)
+            x = self.X[batch_index: batch_index + self.batch_size]
+            y = self.Y[batch_index: batch_index + self.batch_size]
+            self._prepare_epoch__(x)
             self._propagate_forward__()
             self._prep_backward_propagation__()
             # self._backward_propagate_2__()
-            self._backward_propagate__(self.A[-1], self.Y)
+            self._backward_propagate__(self.A[-1], y)
             print("J", round(self.J, 5), end=" ")
             rate = self._evaluate(self._process_feedforward(self.Validation_Data), self.Validation_Y)
             print("Success results =", round(rate, 2))
