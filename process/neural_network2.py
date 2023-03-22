@@ -33,7 +33,7 @@ class Neural_2(neural_network.Neural):
         self.eta = eta
         print("In derived class init")
         # random assignment of weights for each layer
-        self.W = [np.random.randn(*z) for z in list(zip([x for x in self.size[1:]], [y for y in self.size[:-1]]))]
+        self.W = [np.random.randn(x, y) for x, y in zip(self.size[1:], self.size[:-1])]
         # random assignment of bias for each layer
         self.B = [np.random.randn(x, 1) for x in self.size[1:]]
         # Open and populate training data into object instance variables.

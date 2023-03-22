@@ -107,7 +107,7 @@ class Neural:
             # W[i]      => (size(i), size(i-1))
             # A[i-1]    => (size(i-1),60000)
             # B[i]      => (size(i))
-            a_next = 1 / (1 + np.exp(-1 * z_next))
+            a_next = 1.0 / (1.0 + np.exp(-1 * z_next))
             self.A.append(a_next)
             self.Z.append(z_next)
         self.A_OUTPUT_LAYER = np.sum(self.A[-1], axis=0)
@@ -200,14 +200,6 @@ class Neural:
         b = np.count_nonzero(a)
         print("No of non zero = ", b, end=" ")
         return b/self.m
-
-
-    def _evaluate(self):
-        """
-        Evaluate percentage effectiveness of the model
-        :return:
-        """
-        result = self.A_OUTPUT_LAYER - self.Y
 
     def train(self, epochs=10):
         """ This is the externally exposed class, which is just a wrapper
