@@ -61,7 +61,7 @@ class Neural:
                                         mode="rb")
         training_image_bytes = bytearray(self.m * 784 + 16)
         training_image_bytes_read = training_image_file.readinto(training_image_bytes)
-        training_image_set = np.array(training_image_bytes[16:]).reshape((60000, 784))
+        training_image_set = np.array(training_image_bytes[16:]).reshape((self.m, 784))
         # extract training labels
         training_label_file = gzip.open(os.path.join(projectrootfolder, "data", "train-labels-idx1-ubyte.gz"),
                                         mode="rb")

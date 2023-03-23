@@ -22,7 +22,7 @@ def vectorize_y(y):
 
 class Neural_2(neural_network.Neural):
     def __init__(self, training_data, no_of_neural_layers,  no_of_training_set_members=50000,
-                 no_of_validation_data_members=10000, eta=0.25, l_regularize=0.15, m=20000):
+                 no_of_validation_data_members=10000, eta=0.25, l_regularize=0.15, m=9000):
         """
         Initialize class with size as input.
         :param no_of_neural_layers: a list which contains no of neurons for each layer.So, len(size) will provide total
@@ -38,6 +38,7 @@ class Neural_2(neural_network.Neural):
         self.lmbda = l_regularize
         self.batch_size = m
         print("In derived class init")
+        print("m is", self.m)
         # random assignment of weights for each layer
         self.W = [np.random.randn(x, y) for x, y in zip(self.size[1:], self.size[:-1])]
         # random assignment of bias for each layer
