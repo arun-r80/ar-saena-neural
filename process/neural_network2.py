@@ -2,9 +2,11 @@
 Neural Network fine-tuned with cross entropy, mini batches and yet all
 """
 
-import numpy as np, gzip, os, pathlib
+import numpy as np, gzip, os
+from pathlib import Path
 from process import neural_network
-import matplotlib.pyplot
+import pickle
+# import matplotlib.pyplot
 
 
 def vectorize_y(y):
@@ -20,7 +22,7 @@ def vectorize_y(y):
 
 class Neural_2(neural_network.Neural):
     def __init__(self, training_data, no_of_neural_layers,  no_of_training_set_members=50000,
-                 no_of_validation_data_members=10000, eta=0.25, l_regularize=0.15, m=10):
+                 no_of_validation_data_members=10000, eta=0.25, l_regularize=0.15, m=20000):
         """
         Initialize class with size as input.
         :param no_of_neural_layers: a list which contains no of neurons for each layer.So, len(size) will provide total
@@ -28,7 +30,6 @@ class Neural_2(neural_network.Neural):
         and output layers.
         """
         super().__init__(training_data, no_of_neural_layers, no_of_training_set_members, eta=eta)
-
         self.m = no_of_training_set_members
         self.v = no_of_validation_data_members
         self.cost_function = []
@@ -51,23 +52,22 @@ class Neural_2(neural_network.Neural):
         # and these 784 pixels, in turn, refer to 28x28 pixels.
         training_data_transposed = training_x.T
         self.X = training_data_transposed[:no_of_training_set_members].T  # X => (784, 60000)
-        self.Validation_Data = training_data_transposed[no_of_training_set_members:].T
+        self.Validation_Data = training_data_transposed[-no_of_validation_data_members:].T # Validation_Data => (784, 10000)
+        print("In Init")
         # Modify training results - y - to be a vector
         self.Y = vectorize_y(training_y[:no_of_training_set_members])
         self.RAW_Y = training_y[:no_of_training_set_members]
-        self.Validation_Y = vectorize_y(training_y[no_of_training_set_members:])
+        self.Validation_Y = vectorize_y(training_y[-no_of_validation_data_members:])
         self.epochs = 10  # initialize epochs for the training model
         # Load training data
         test_data_file = gzip.open(os.path.join(training_data, "data", "t10k-images-idx3-ubyte.gz"), mode="rb")
         test_data_bytes = bytearray(10000 * 784 + 16)
         test_data_file.readinto(test_data_bytes)
         self.test_data = np.array(test_data_bytes)[16:].reshape(784, 10000)
-        print("test data read bytes", np.shape(self.test_data))
         test_label_file = gzip.open(os.path.join(training_data, "data", "t10k-labels-idx1-ubyte.gz"), mode="rb")
         test_label_bytes = bytearray(10000 + 4)
         test_label_file.readinto(test_data_bytes)
         self.test_label = np.array(test_label_bytes)[4:]
-        print("Shape of Test labels", np.shape(self.test_label))
 
     def _prepare_epoch__(self, x):
         """
@@ -139,7 +139,6 @@ class Neural_2(neural_network.Neural):
         :param y: categorised results for the given dataset
         :return: percentage of successful results
         """
-
         a = np.array([np.isclose(np.argmax(x), np.argmax(y), atol=0.2, rtol=0.01) for x, y in zip(a.T, y.T)])
         r = np.count_nonzero(a)
         return r / len(a.T) * 100
@@ -150,14 +149,14 @@ class Neural_2(neural_network.Neural):
                 epochs: No of epochs to train the data
             """
         self.epochs = epochs
-        X_Transpose = self.X.T
-        Y_Transpose = self.Y.T
+        x_transpose = self.X.T
+        y_transpose = self.Y.T
         # initialize weighted output(Z) and activation function output for this epoch
         for i in range(self.epochs):
             print("Epoch ", i, end=" ")
             batch_index = np.random.randint(0, self.m - self.batch_size, 1, dtype=int)[0]
-            x = X_Transpose[batch_index: batch_index + self.batch_size].T
-            y = Y_Transpose[batch_index: batch_index + self.batch_size].T
+            x = x_transpose[batch_index: batch_index + self.batch_size].T
+            y = y_transpose[batch_index: batch_index + self.batch_size].T
             self._prepare_epoch__(x)
             self._propagate_forward__()
             self._prep_backward_propagation__()
@@ -168,14 +167,18 @@ class Neural_2(neural_network.Neural):
             print("Success results =", round(rate, 2))
             self.cost_function.append(self.J)
             self.success_rate.append(rate)
+        # pickle the file for plotting in JupyterHub
+        a = (self.cost_function, self.success_rate)
+        results = open(os.path.join(Path.cwd(), "data", "plot.pkl"), mode="wb")
+        pickle.dump(a, results)
 
-        fig, (ax1, ax2) = matplotlib.pyplot.subplots(2, 1)
-        ax1.plot(range(self.epochs), self.cost_function, "g")
-        matplotlib.pyplot.title("Cost Function")
-        matplotlib.pyplot.xlabel("Epochs")
-        matplotlib.pyplot.ylabel("Cost")
-        ax2.plot(range(self.epochs), self.success_rate, "r")
-        matplotlib.pyplot.title("Success Rate")
-        matplotlib.pyplot.xlabel("Epochs")
-        matplotlib.pyplot.ylabel("Success Rate(%)")
-        matplotlib.pyplot.show()
+        # fig, (ax1, ax2) = matplotlib.pyplot.subplots(2, 1)
+        # ax1.plot(range(self.epochs), self.cost_function, "g")
+        # matplotlib.pyplot.title("Cost Function")
+        # matplotlib.pyplot.xlabel("Epochs")
+        # matplotlib.pyplot.ylabel("Cost")
+        # ax2.plot(range(self.epochs), self.success_rate, "r")
+        # matplotlib.pyplot.title("Success Rate")
+        # matplotlib.pyplot.xlabel("Epochs")
+        # matplotlib.pyplot.ylabel("Success Rate(%)")
+        # matplotlib.pyplot.show()

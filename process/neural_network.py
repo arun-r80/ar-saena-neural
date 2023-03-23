@@ -4,9 +4,9 @@ train - ie., to forward and backpropagate on training data.
 """
 
 import numpy as np
-import os, \
-    matplotlib.pyplot, \
-    gzip \
+import os,  gzip
+   # matplotlib.pyplot, \
+
 
 
 
@@ -111,6 +111,7 @@ class Neural:
             self.A.append(a_next)
             self.Z.append(z_next)
         self.A_OUTPUT_LAYER = np.sum(self.A[-1], axis=0)
+
 
     def _calculate_loss__(self):
         """
