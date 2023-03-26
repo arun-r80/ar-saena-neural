@@ -5,6 +5,7 @@ import os
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 from process import neural_network as neural
 from process import neural_network2 as neural2
+from process import neural_network_2_1 as neural2_5
 import numpy as np
 
 # Read configuration file for important parameters
@@ -15,13 +16,21 @@ training_data_file = os.path.join(os.getcwd())  # , "data",training_data_redimen
 # initialize neuron structure for neural schema.
 # handwritten_digits = neural.Neural(training_data_file, [784,10, 9], 60000)
 # handwritten_digits.train(500)
+#
+# handwritten_digits = neural2.Neural_2(training_data_file, [784, 100, 9],
+#                                       no_of_training_set_members=50000,
+#                                       no_of_validation_data_members=10000,
+#                                       eta=0.25,
+#                                       l_regularize=0.15,
+#                                       m=1000)
+# handwritten_digits.train(100)
 
-handwritten_digits = neural2.Neural_2(training_data_file, [784, 100, 9],
-                                      no_of_training_set_members=50000,
-                                      no_of_validation_data_members=10000,
-                                      eta=0.25,
-                                      l_regularize=0.15,
-                                      m=1000)
-handwritten_digits.train(400)
+handwritten_digits = neural2_5.neural_2_1(training_data_file, [784, 30, 10],
+                                          no_of_training_set_members=50000,
+                                          no_of_validation_data_members=10000,
+                                          eta=0.01,
+                                          l_regularize=0.15,
+                                          m=10)
+handwritten_digits.train(50)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

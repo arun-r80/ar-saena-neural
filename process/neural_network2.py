@@ -6,7 +6,7 @@ import numpy as np, gzip, os
 from pathlib import Path
 from process import neural_network
 import pickle
-# import matplotlib.pyplot
+import matplotlib.pyplot
 
 
 def vectorize_y(y):
@@ -14,9 +14,9 @@ def vectorize_y(y):
     Create vectorized training output for a given training
     :return: vectorized training output
     """
-    vector_base = np.zeros((len(y), 9))
+    vector_base = np.zeros((len(y), 10))
     for output in range(len(y)):
-        vector_base[output][y[output] - 1] = 1
+        vector_base[output][y[output]] = 1
     return vector_base.T
 
 
@@ -58,7 +58,8 @@ class Neural_2(neural_network.Neural):
         # Modify training results - y - to be a vector
         self.Y = vectorize_y(training_y[:no_of_training_set_members])
         self.RAW_Y = training_y[:no_of_training_set_members]
-        self.Validation_Y = vectorize_y(training_y[-no_of_validation_data_members:])
+        self.RAW_VALIDATION_Y = training_y[-no_of_validation_data_members:]
+        self.Validation_Y = vectorize_y(self.RAW_VALIDATION_Y)
         self.epochs = 10  # initialize epochs for the training model
         # Load training data
         test_data_file = gzip.open(os.path.join(training_data, "data", "t10k-images-idx3-ubyte.gz"), mode="rb")
@@ -103,7 +104,7 @@ class Neural_2(neural_network.Neural):
         :param y: expected results for the sample size
         :return: cross entropy based loss function as a vector
         """
-        return -1 * (y * np.log(a) + (1 - y) * np.log(1 - a))
+        return  np.nan_to_num((-y * np.log(a) - (1 - y) * np.log(1 - a)))
 
     def _calculate_loss__(self,a, y, lmbda, batchsize=50000):
         """
@@ -111,23 +112,27 @@ class Neural_2(neural_network.Neural):
         :param y: output values for training
         :return:
         """
-        self.L_across_outputneurons = self._loss_fn_(a, y)
-        self.L_across_samplesize = np.sum(self.L_across_outputneurons, axis=1,keepdims=True) + (lmbda * 0.5) * sum(np.linalg.norm(w)**2 for w in self.W)
-        self.J = np.sum(self.L_across_samplesize) / batchsize
+        print("Shape of a ang y in calculate loss", np.shape(a), np.shape(y))
+        l_across_outputneurons = self._loss_fn_(a, y)
+        regularized_cost = np.sum(l_across_outputneurons, axis=0,keepdims=True) # => (n[l],self.m)
+        l_across_samplesize = regularized_cost + (lmbda * 0.5) * sum(np.linalg.norm(w)**2 for w in self.W)
+        self.J = np.sum(l_across_samplesize) / batchsize
+
 
     def _backward_propagate__(self, a, y):
         """
         Update weights and biases for the epoch, using backward propagation.
         :return:
         """
-        self._calculate_loss__(a, y, self.lmbda, batchsize=self.batch_size)
-        delta = self._moment_lossonoutput__(self.A[-1], y)
-        db = np.sum(delta, axis=1, keepdims=True)
-        dw = np.dot(delta, self.A[-2].T)
+        delta = self._moment_lossonoutput__(a, y) # delta => n[l],b where b is batch size
+        db = np.sum(delta, axis=1, keepdims=True) # db => n[l],1
+        dw = np.dot(delta, self.A[-2].T) # delta => n[l], b; A[-2].T => b,n[l-1]; dw => n[l], n[l-2]
         self.W[-1] = self.W[-1]*(1 - self.eta * (self.lmbda/self.m)) - (self.eta/self.batch_size) * dw
         self.B[-1] -= (self.eta/self.batch_size) * db
         for layer in range(len(self.W) - 1, 0, -1):
-            delta = np.dot(delta.T, self.W[layer]).T * self._moment_of_activation_function_on_weighted_output__(layer)
+            delta = np.dot(self.W[layer].T, delta) * self._moment_of_activation_function_on_weighted_output__(layer)
+            # np.dot(W[layer].T => (n[l-1],n[l], delta => (n[l],b)) => n[l-1],b
+            #delta = n[l-1],b
             db_population = delta
             dw = np.dot(db_population, self.A[layer - 1].T)
             self.W[layer - 1] = self.W[layer - 1] * (1 - self.eta * (self.lmbda/self.m)) - (self.eta/self.batch_size) * dw
@@ -140,8 +145,10 @@ class Neural_2(neural_network.Neural):
         :param y: categorised results for the given dataset
         :return: percentage of successful results
         """
-        a = np.array([np.isclose(np.argmax(x), np.argmax(y), atol=0.2, rtol=0.01) for x, y in zip(a.T, y.T)])
-        r = np.count_nonzero(a)
+
+        b = np.array([np.isclose(np.argmax(x), np.argmax(y), atol=0.3, rtol=0.01) for x, y in zip(a.T, y.T)])
+        print(y.T[2000], a.T[2000], np.argmax(y.T[2000]), np.argmax(a.T[2000]), b[2000], round(y.T[2000][np.argmax(y.T[2000])] - a.T[2000][np.argmax(a.T[2000])],2))
+        r = np.count_nonzero(b)
         return r / len(a.T) * 100
 
     def train(self, epochs=10):
@@ -162,6 +169,7 @@ class Neural_2(neural_network.Neural):
             self._propagate_forward__()
             self._prep_backward_propagation__()
             # self._backward_propagate_2__()
+            self._calculate_loss__(self.A[-1], y, self.lmbda, batchsize=self.m)
             self._backward_propagate__(self.A[-1], y)
             print("J", round(self.J, 5), end=" ")
             rate = self._evaluate(self._process_feedforward(self.Validation_Data), self.Validation_Y)
@@ -173,13 +181,13 @@ class Neural_2(neural_network.Neural):
         results = open(os.path.join(Path.cwd(), "data", "plot.pkl"), mode="wb")
         pickle.dump(a, results)
 
-        # fig, (ax1, ax2) = matplotlib.pyplot.subplots(2, 1)
-        # ax1.plot(range(self.epochs), self.cost_function, "g")
-        # matplotlib.pyplot.title("Cost Function")
-        # matplotlib.pyplot.xlabel("Epochs")
-        # matplotlib.pyplot.ylabel("Cost")
-        # ax2.plot(range(self.epochs), self.success_rate, "r")
-        # matplotlib.pyplot.title("Success Rate")
-        # matplotlib.pyplot.xlabel("Epochs")
-        # matplotlib.pyplot.ylabel("Success Rate(%)")
-        # matplotlib.pyplot.show()
+        fig, (ax1, ax2) = matplotlib.pyplot.subplots(2, 1)
+        ax1.plot(range(self.epochs-3), self.cost_function[3:], "g")
+        matplotlib.pyplot.title("Cost Function")
+        matplotlib.pyplot.xlabel("Epochs")
+        matplotlib.pyplot.ylabel("Cost")
+        ax2.plot(range(self.epochs-3), self.success_rate[3:], "r")
+        matplotlib.pyplot.title("Success Rate")
+        matplotlib.pyplot.xlabel("Epochs")
+        matplotlib.pyplot.ylabel("Success Rate(%)")
+        matplotlib.pyplot.show()
