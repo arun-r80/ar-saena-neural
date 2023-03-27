@@ -31,6 +31,6 @@ handwritten_digits = neural2_5.neural_2_1(training_data_file, [784, 30, 10],
                                           eta=0.01,
                                           l_regularize=0.15,
                                           m=10)
-handwritten_digits.train(50)
+handwritten_digits.train(30)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

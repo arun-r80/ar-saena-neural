@@ -94,7 +94,8 @@ class neural_2_1(neural_network2.Neural_2):
         """
         l_across_outputneurons = self._loss_fn_(a, y)
         regularized_cost = np.sum(l_across_outputneurons, axis=0, keepdims=True)  # => (n[l],self.m)
-        self.J = np.sum(regularized_cost) / batchsize
+        self.J = np.sum(regularized_cost) / batchsize + 0.5*(lmbda/batchsize)*sum(
+            np.linalg.norm(w)**2 for w in self.W)
 
     def _evaluate(self, a, y, count):
         """
@@ -124,7 +125,6 @@ class neural_2_1(neural_network2.Neural_2):
             for minibatch in training_shuffled_minibatches:
                 x = np.array([a[0] for a in minibatch]).T
                 y = np.array([a[1] for a in minibatch]).T
-
                 self._prepare_epoch__(x)
                 self._propagate_forward__()
                 self._prep_backward_propagation__()
