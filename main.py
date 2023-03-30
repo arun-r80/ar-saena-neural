@@ -33,6 +33,7 @@ handwritten_digits = neural2_3.neural_2_3(training_data_file, [784, 30, 10],
                                           eta=0.01,
                                           l_regularize=0.15,
                                           m=10)
+
 handwritten_digits.train(10)
 
 handwritten_digits = neural2_2.neural_2_2(training_data_file, [784, 30, 10],
@@ -50,6 +51,9 @@ handwritten_digits.train(10)
 #                                           l_regularize=.15,
 #                                           m=10)
 # handwritten_digits.train(10)
+
+
+
 
 
 
