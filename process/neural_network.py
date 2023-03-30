@@ -5,7 +5,7 @@ train - ie., to forward and backpropagate on training data.
 
 import numpy as np
 import os,  gzip
-import matplotlib.pyplot
+# import matplotlib.pyplot
 
 
 

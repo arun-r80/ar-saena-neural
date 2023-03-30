@@ -10,4 +10,7 @@ misc.py
 train_label_pkl.pkl
 training_dataset_redimensioned_pkl.pkl
 plot.pkl
-/process/__pycache__
+**/__pycache__
+fig
+src
+__pycache__
