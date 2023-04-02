@@ -2,6 +2,7 @@ from process import neural_network_2_1 as neural
 import numpy as np
 import random
 
+
 def vectorize_y(y):
     """
     Create vectorized training output for a given training
@@ -10,6 +11,7 @@ def vectorize_y(y):
     vector_base = np.zeros(10)
     vector_base[y] = 1
     return vector_base
+
 
 class neural_2_2(neural.neural_2_1):
 
@@ -25,6 +27,21 @@ class neural_2_2(neural.neural_2_1):
                          no_of_validation_data_members=no_of_validation_data_members, eta=eta,
                          l_regularize=l_regularize, m=m)
         self.training_data_transposed = list(zip(self.X.T, self.Y.T))
+
+    def _regularize_w(self, eta, lmbda, m, batch_size, w_network, nabla_w):
+        """
+        A convenience method to employ different reqularization techniques. A convenience wrapper to
+        seperate regularization logic from backward propagation.
+        :param eta: learning rate
+        :param lmbda: regularization parameter
+        :param m: training set size
+        :param batch_size: batch size
+        :param w_network: weights for the network
+        :param nabla_w: difference in weights
+        :return: regularized weight based on hyper-parameters and regularization logic
+        """
+        return [(1 - eta * (lmbda / m)) * w - (eta / batch_size) * nw for w, nw in
+                zip(w_network, nabla_w)]
 
     def _backward_propagate__(self, a, y):
         """
@@ -62,12 +79,13 @@ class neural_2_2(neural.neural_2_1):
         for x, y in minibatch:
             self._prepare_epoch__(np.reshape(x, (784, 1)))
             self._propagate_forward__()
-            delta_nabla_w, delta_nabla_b = self._backward_propagate__(self.A[-1], np.reshape(y, (self.size[-1] ,1)))
-            nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-            nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-        self.W = [ (1 - self.eta*(self.lmbda/self.m))*w - (self.eta/self.batch_size) * nw  for w,nw in zip(self.W, nabla_w)]
+            delta_nabla_w, delta_nabla_b = self._backward_propagate__(self.A[-1], np.reshape(y, (self.size[-1], 1)))
+            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+        self.W = self._regularize_w(self.eta, self.lmbda, self.m, self.batch_size, self.W, nabla_w)
+        # self.W = [ (1 - self.eta*(self.lmbda/self.m))*w - (self.eta/self.batch_size) * nw  for w,nw in zip(self.W, nabla_w)]
         # self.W = (1 - self.eta*(self.lmbda/self.m))*self.W - (self.eta/self.batch_size) * nabla_w
-        self.B = [b - (self.eta/self.batch_size) * nb for b, nb in zip(self.B, nabla_b)]
+        self.B = [b - (self.eta / self.batch_size) * nb for b, nb in zip(self.B, nabla_b)]
         # self.B -= (self.eta/self.batch_size) * nabla_b
 
     def train(self, epochs=10):
@@ -81,12 +99,14 @@ class neural_2_2(neural.neural_2_1):
         for e in range(epochs):
             print("Epoch ", e, end=" ")
             random.shuffle(self.training_data_transposed)
-            minibatches = [self.training_data_transposed[k: k + self.batch_size] for k in range(0,self.m, self.batch_size)]
+            minibatches = [self.training_data_transposed[k: k + self.batch_size] for k in
+                           range(0, self.m, self.batch_size)]
 
             for minibatch in minibatches:
                 self._run_minibatch(minibatch)
             self._calculate_loss__(self._process_feedforward(self.X), self.Y, self.lmbda, batchsize=50000)
             self.cost_function.append(self.J)
-            rate = self._evaluate(neural.devectorize(self._process_feedforward(self.Validation_Data)), self.RAW_VALIDATION_Y, self.length_validation_data)
+            rate = self._evaluate(neural.devectorize(self._process_feedforward(self.Validation_Data)),
+                                  self.RAW_VALIDATION_Y, self.length_validation_data)
             self.success_rate.append(rate)
             print("Cost = ", self.J, "Success rate %f %", rate)
