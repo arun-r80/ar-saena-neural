@@ -88,6 +88,7 @@ class neural_2_3(neural.neural_2_2):
               "Shape of Y", np.shape(self.Y),
               "Shape of Validation Data", np.shape(self.Validation_Data),
               "Shape of Raw Validation Data", np.shape(self.RAW_VALIDATION_Y),
+              "Shape of Test Data", np.shape(self.test_data_raw[0].T),
               "Shape of y in training data", np.shape(self.training_data[0][1]))
 
         # random assignment of weights for each layer
@@ -115,7 +116,7 @@ class neural_2_3(neural.neural_2_2):
                 self._run_minibatch(minibatch)
             self._calculate_loss__(self._process_feedforward(self.X), self.Y, self.lmbda, batchsize=50000)
             self.cost_function.append(self.J)
-            rate = self._evaluate(neural_network_2_1.devectorize(self._process_feedforward(self.Validation_Data)),
-                                  self.RAW_VALIDATION_Y, self.length_validation_data)
+            rate = self._evaluate(neural_network_2_1.devectorize(self._process_feedforward(self.test_data_raw[0].T)),
+                                  self.test_data_raw[1], self.length_validation_data)
             self.success_rate.append(rate)
             print("Cost = ", self.J, "Success rate %f %", rate)

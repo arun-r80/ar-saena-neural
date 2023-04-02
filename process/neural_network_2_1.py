@@ -65,7 +65,7 @@ class neural_2_1(neural_network2.Neural_2):
         :param y: categorised results for the given dataset
         :return: percentage of successful results
         """
-        print("Total no of successful identification", np.count_nonzero(a == y))
+
         return (np.count_nonzero(a == y) / count) * 100
 
     def train(self, epochs=10):
@@ -86,6 +86,7 @@ class neural_2_1(neural_network2.Neural_2):
             for minibatch in training_shuffled_minibatches:
                 x = np.array([a[0] for a in minibatch]).T
                 y = np.array([a[1] for a in minibatch]).T
+
                 self._prepare_epoch__(x)
                 self._propagate_forward__()
                 self._prep_backward_propagation__()

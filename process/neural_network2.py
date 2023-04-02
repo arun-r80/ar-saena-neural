@@ -124,6 +124,7 @@ class Neural_2(neural_network.Neural):
         Update weights and biases for the epoch, using backward propagation.
         :return:
         """
+
         delta = self._moment_lossonoutput__(a, y) # delta => n[l],b where b is batch size
         db = np.sum(delta, axis=1, keepdims=True) # db => n[l],1
         dw = np.dot(delta, self.A[-2].T) # delta => n[l], b; A[-2].T => b,n[l-1]; dw => n[l], n[l-2]
