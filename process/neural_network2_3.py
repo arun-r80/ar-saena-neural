@@ -119,4 +119,4 @@ class neural_2_3(neural.neural_2_2):
             rate = self._evaluate(neural_network_2_1.devectorize(self._process_feedforward(self.test_data_raw[0].T)),
                                   self.test_data_raw[1], self.length_validation_data)
             self.success_rate.append(rate)
-            print("Cost = ", self.J, "Success rate %f %", rate)
+            print("Cost = ", round(self.J, 5), "Success rate %f %", rate)
