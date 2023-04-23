@@ -103,6 +103,8 @@ class neural_2_3(neural.neural_2_2):
         """ This is the externally exposed class, which is just a wrapper
                 on forward and backward propagation functions.
                 epochs: No of epochs to train the data
+                return: a tuple with list object containing cost calculated for each epoch, and a list object containing
+                        success rate for each epoch
             """
         self.epochs = epochs
         self.cost_function = []
@@ -120,3 +122,4 @@ class neural_2_3(neural.neural_2_2):
                                   self.test_data_raw[1], self.length_validation_data)
             self.success_rate.append(rate)
             print("Cost = ", round(self.J, 5), "Success rate %f %", rate)
+        return self.cost_function, self.success_rate

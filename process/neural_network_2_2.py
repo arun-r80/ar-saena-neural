@@ -1,6 +1,13 @@
+"""
+This class is the final implementation for cross-entropy based neural network, and this implementation also
+removes vectorization in computing logic. This class can be used as baseline for hyper parameter calculation.
+"""
+
+
 from process import neural_network_2_1 as neural
 import numpy as np
 import random
+import matplotlib.pyplot as plot
 
 
 def vectorize_y(y):
@@ -92,6 +99,8 @@ class neural_2_2(neural.neural_2_1):
         """ This is the externally exposed class, which is just a wrapper
                 on forward and backward propagation functions.
                 epochs: No of epochs to train the data
+                return: a tuple with list object containing cost calculated for each epoch, and a list object containing
+                        success rate for each epoch
             """
         self.epochs = epochs
         self.cost_function = []
@@ -110,3 +119,6 @@ class neural_2_2(neural.neural_2_1):
                                   self.RAW_VALIDATION_Y, self.length_validation_data)
             self.success_rate.append(rate)
             print("Cost = ", self.J, "Success rate %f %", rate)
+        return self.cost_function, self.success_rate
+
+

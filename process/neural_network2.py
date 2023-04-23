@@ -6,7 +6,7 @@ import numpy as np, gzip, os
 from pathlib import Path
 from process import neural_network
 import pickle
-# import matplotlib.pyplot
+import matplotlib.pyplot
 
 
 def vectorize_y(y):

@@ -31,8 +31,8 @@ training_data_file = os.path.join(os.getcwd())  # , "data",training_data_redimen
 handwritten_digits = neural2_3.neural_2_3(training_data_file, [784, 30, 10],
                                           no_of_training_set_members=50000,
                                           no_of_validation_data_members=10000,
-                                          eta=0.5,
-                                          l_regularize=0.15,
+                                          eta=0.15,
+                                          l_regularize=0.01,
                                           m=10)
 
 handwritten_digits.train(10)
@@ -53,13 +53,13 @@ handwritten_digits.train(10)
 #                                           m=10)
 # handwritten_digits.train(10)
 
-handwritten_digits = neural2_4.neural_2_4(training_data_file, [784, 30, 10],
-                                          no_of_training_set_members=50000,
-                                          no_of_validation_data_members=10000,
-                                          eta=0.5,
-                                          l_regularize=.15,
-                                          m=10)
-handwritten_digits.train(10)
+# handwritten_digits = neural2_4.neural_2_4(training_data_file, [784, 30, 10],
+#                                           no_of_training_set_members=50000,
+#                                           no_of_validation_data_members=10000,
+#                                           eta=0.5,
+#                                           l_regularize=.15,
+#                                           m=10)
+# handwritten_digits.train(10)
 
 
 
