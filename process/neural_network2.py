@@ -37,8 +37,6 @@ class Neural_2(neural_network.Neural):
         self.eta = eta
         self.lmbda = l_regularize
         self.batch_size = m
-        print("In derived class init")
-        print("m is", self.m)
         # random assignment of weights for each layer
         self.W = [np.random.randn(x, y) for x, y in zip(self.size[1:], self.size[:-1])]
         # random assignment of bias for each layer
@@ -117,7 +115,6 @@ class Neural_2(neural_network.Neural):
         regularized_cost = np.sum(l_across_outputneurons, axis=0,keepdims=True) # => (n[l],self.m)
         l_across_samplesize = regularized_cost + (lmbda * 0.5) * sum(np.linalg.norm(w)**2 for w in self.W)
         self.J = np.sum(l_across_samplesize) / batchsize
-
 
     def _backward_propagate__(self, a, y):
         """
